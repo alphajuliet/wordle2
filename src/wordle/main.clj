@@ -38,11 +38,6 @@
 ;;------------------------
 ;; Word scoring
 
-(def count-letters
-  #(->> %
-        (group-by identity)
-        (map-kv count)))
-
 (defn normalise-counts
   [h]
   (let [sum (apply + (vals h))]
@@ -65,12 +60,6 @@
        (select-keys freqs)
        vals
        (apply +)))
-
-(defn score-word
-  "Score a word based on word list stats"
-  [freqs probs word]
-  (+ (score-freqs freqs word)
-        (score-position probs word)))
 
 ;;------------------------
 ;; Patterns
