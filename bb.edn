@@ -1,0 +1,6 @@
+;; bb.edn
+
+{:paths ["src"]
+ :deps {}}
+
+;; The End
