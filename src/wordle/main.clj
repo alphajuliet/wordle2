@@ -109,8 +109,9 @@
 
 ;;------------------------
 (defn -main [letters-in letters-out pattern]
-  (let [words (read-words "data/nyt-words5.txt")]
-    (rank-words words (contains letters-in) (!contains letters-out) pattern)))
-
+  (let [words (read-words "data/nyt-words5.txt")
+        results (rank-words words (contains letters-in) (!contains letters-out) (re-pattern pattern))
+        len (count results)]
+    (println (take (min len 20) results))))
 
 ;; The End
