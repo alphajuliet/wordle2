@@ -1,6 +1,10 @@
 (ns wordle.main
   (:require [clojure.string :as str]))
 
+(defmacro fn->>
+  [& forms]
+  `(fn [x#] (->> x# ~@forms)))
+
 (defn map-kv
   "Map f over the values of a map."
   [f coll]
@@ -8,9 +12,8 @@
 
 (def read-words
   "Read in a word list"
-  #(->> %
-        slurp
-        (str/split-lines)))
+  (fn->> slurp
+         str/split-lines))
 
 (defn normalise-counts
   [m]
@@ -20,20 +23,18 @@
 ;;------------------------
 ;;Word list stats
 
-(defn positional-probs
+(def positional-probs
   "Return the letter probability of occurring in each position for the words in the list.
    This is independent of neighbouring letters."
-  [words]
-  (->> words
-       (map #(str/split % #""))
-       (apply map list) ; transpose
-       (map (partial group-by identity))
-       (map (partial map-kv count))
-       (map normalise-counts)))
+  (fn->> (map #(str/split % #""))
+         (apply map list) ; transpose
+         (map (partial group-by identity))
+         (map (partial map-kv count))
+         (map normalise-counts)))
 
-(defn occurrence-probs
-  [words]
-  (frequencies (str/join "" words)))
+(def occurrence-probs
+  (fn->> (str/join "")
+         frequencies))
 
 ;;------------------------
 ;; Word scoring
@@ -101,7 +102,10 @@
     (sort-by val > (zipmap results scores))))
 
 ;;------------------------
-(defn -main [letters-in letters-out pattern]
+(defn -main
+  "Do the most common call to rank a filtered list of words created by patterns"
+  ;; e.g. (-main "atn" "b" "....n")
+  [letters-in letters-out pattern]
   (let [words (read-words "data/nyt-words5.txt")
         results (rank-words words (contains letters-in) (!contains letters-out) (re pattern))
         len (count results)]
