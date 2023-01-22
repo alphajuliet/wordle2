@@ -87,6 +87,10 @@
 (def !contains
   #(re-pattern (str "[^" % "]{5}")))
 
+(def re
+  "Alias for re-pattern"
+  re-pattern)
+
 (defn filter-pattern
   "Return a transducer"
   [regex]
@@ -110,7 +114,7 @@
 ;;------------------------
 (defn -main [letters-in letters-out pattern]
   (let [words (read-words "data/nyt-words5.txt")
-        results (rank-words words (contains letters-in) (!contains letters-out) (re-pattern pattern))
+        results (rank-words words (contains letters-in) (!contains letters-out) (re pattern))
         len (count results)]
     (println (take (min len 20) results))))
 
