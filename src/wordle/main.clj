@@ -74,8 +74,11 @@
       (str/join "" <>)
       (re-pattern <>)))
 
-(def !contains
-  #(re-pattern (str "[^" % "]{5}")))
+(defn !contains
+  [letters]
+  (if (zero? (count letters))
+    #""
+    (re-pattern (str "[^" letters "]{5}"))))
 
 (def re
   "Alias for re-pattern"
@@ -96,8 +99,8 @@
 (defn rank-words
   "Rank words by letter frequencies"
   [words & patterns]
-  (let [freqs (occurrence-probs words)
-        results (apply filter-words words patterns)
+  (let [results (apply filter-words words patterns)
+        freqs (occurrence-probs results)
         scores (map #(score-freqs freqs %) results)]
     (sort-by val > (zipmap results scores))))
 
