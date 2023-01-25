@@ -62,13 +62,14 @@
 
 (defn score-position
   "Score a word on letter positional probabilities"
-  [probs word]
+  [pos-probs word]
   (let [letters (str/split word #"")]
     (->> letters
-         (map #(get %1 %2) probs)
-         (map (partial * 100))
-         (apply *)
-         int)))
+         (map #(get %1 %2) pos-probs)
+         (map #(* % (Math/log %)))
+         (apply +)
+         (* -1.)
+         (round2 3))))
 
 (defn score-freqs
   "Score a word on letter freqencies"
@@ -85,6 +86,11 @@
        (select-keys probs)
        entropy
        (round2 3)))
+
+(defn score-combo
+  [probs pos-probs word]
+  (round2 3 (* (score-entropy probs word)
+               (score-position pos-probs word))))
 
 ;;------------------------
 ;; Patterns
@@ -126,7 +132,8 @@
   [words & patterns]
   (let [results (apply filter-words words patterns)
         probs (occurrence-probs results)
-        scores (map #(score-entropy probs %) results)]
+        pos-probs (positional-probs results)
+        scores (map #(score-combo probs pos-probs %) results)]
     (sort-by val > (zipmap results scores))))
 
 ;;------------------------
@@ -136,8 +143,7 @@
   "Do the most common call to rank a filtered list of words created by patterns"
   ;; e.g. (-main "atn" "b" "....n")
   [letters-in letters-out pattern]
-  (let [words (read-words "data/nyt-words5.txt")
-        results (rank-words words (contains letters-in) (!contains letters-out) (re pattern))
+  (let [results (rank-words nyt (contains letters-in) (!contains letters-out) (re pattern))
         len (count results)]
     (println (take (min len 20) results))))
 
