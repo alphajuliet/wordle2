@@ -145,6 +145,7 @@
   [letters-in letters-out pattern]
   (let [results (rank-words nyt (contains letters-in) (!contains letters-out) (re pattern))
         len (count results)]
+    (println len "results")
     (println (take (min len 20) results))))
 
 ;; The End
