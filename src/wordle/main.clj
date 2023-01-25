@@ -1,5 +1,6 @@
 (ns wordle.main
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojure.math :as math]))
 
 (defmacro fn->>
   [& forms]
@@ -20,6 +21,11 @@
   (let [sum (apply + (vals m))]
     (map-kv #(/ % sum) m)))
 
+(defn round2
+  "Round a double to the given precision (number of significant digits)"
+  [precision d]
+  (let [factor (math/pow 10 precision)]
+    (/ (math/round (* d factor)) factor)))
 ;;------------------------
 ;;Word list stats
 
@@ -32,17 +38,27 @@
          (map (partial map-kv count))
          (map normalise-counts)))
 
-(def occurrence-probs
-  (fn->> (str/join "")
-         frequencies))
-
-;;------------------------
-;; Word scoring
-
 (defn normalise-counts
   [h]
   (let [sum (apply + (vals h))]
     (map-kv #(* 1. (/ % sum)) h)))
+
+(def occurrence-probs
+  (fn->> (str/join "")
+         frequencies
+         normalise-counts))
+
+;;------------------------
+;; Word scoring
+
+(defn entropy
+  "Calculate the entropy of a set of probabilities"
+  [h]
+  (->> h
+       vals
+       (map #(* % (Math/log %)))
+       (apply +)
+       (* -1.)))
 
 (defn score-position
   "Score a word on letter positional probabilities"
@@ -61,6 +77,14 @@
        (select-keys freqs)
        vals
        (apply +)))
+
+(defn score-entropy
+  "Score the entropy of a word from the probabilities of each letter"
+  [probs word]
+  (->> word
+       (select-keys probs)
+       entropy
+       (round2 3)))
 
 ;;------------------------
 ;; Patterns
@@ -84,6 +108,7 @@
   "Alias for re-pattern"
   re-pattern)
 
+
 (defn filter-pattern
   "Return a transducer"
   [regex]
@@ -100,11 +125,13 @@
   "Rank words by letter frequencies"
   [words & patterns]
   (let [results (apply filter-words words patterns)
-        freqs (occurrence-probs results)
-        scores (map #(score-freqs freqs %) results)]
+        probs (occurrence-probs results)
+        scores (map #(score-entropy probs %) results)]
     (sort-by val > (zipmap results scores))))
 
 ;;------------------------
+(def nyt (read-words "data/nyt-words5.txt"))
+
 (defn -main
   "Do the most common call to rank a filtered list of words created by patterns"
   ;; e.g. (-main "atn" "b" "....n")
